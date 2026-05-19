@@ -609,6 +609,7 @@ function TraderPositionBlock({ trader, compactHeader = false }) {
 function TraderTab() {
   const [sub, setSub] = useState('chart');
   const [selected, setSelected] = useState(watchlist[0]);
+  const [lightningOpen, setLightningOpen] = useState(false);
   const [side, setSide] = useState('buy');
   const [orderType, setOrderType] = useState('limit');
   const [tradeSession, setTradeSession] = useState('regular');
@@ -617,6 +618,7 @@ function TraderTab() {
   const [qty, setQty] = useState('10');
   const [price, setPrice] = useState('980');
   const [modalOpen, setModalOpen] = useState(false);
+  const [orderSubmitMode, setOrderSubmitMode] = useState('normal');
   const [submitted, setSubmitted] = useState(false);
   const numericPrice = Number(String(price).replace(',', '')) || 0;
   const amount = Number(qty || 0) * numericPrice * 1000;
@@ -632,6 +634,15 @@ function TraderTab() {
     setSubmitted(true);
     window.setTimeout(() => setSubmitted(false), 2200);
   };
+
+  const openOrderModal = (mode) => {
+    setOrderSubmitMode(mode);
+    setModalOpen(true);
+  };
+
+  if (lightningOpen) {
+    return <LightningTradePage selected={selected} setSelected={setSelected} onBack={() => setLightningOpen(false)} />;
+  }
 
   return (
     <div>
@@ -704,7 +715,8 @@ function TraderTab() {
             setPrice={setPrice}
             amount={amount}
             submitted={submitted}
-            openModal={() => setModalOpen(true)}
+            openModal={openOrderModal}
+            openLightning={() => setLightningOpen(true)}
           />
         </aside>
       </div>
@@ -721,6 +733,7 @@ function TraderTab() {
           qty={qty}
           price={price}
           amount={amount}
+          submitMode={orderSubmitMode}
           close={() => setModalOpen(false)}
           confirm={confirmOrder}
         />
@@ -811,6 +824,7 @@ function OrderPanel({
   amount,
   submitted,
   openModal,
+  openLightning,
 }) {
   const amountLabel = orderType === 'market' ? '市價單' : `$${Math.round(amount).toLocaleString()}`;
   const orderAction = getOrderAction(productType, side);
@@ -869,9 +883,15 @@ function OrderPanel({
       </Field>
       <div className="estimated-amt"><span className="est-label">預估金額</span><span className="est-val">{amountLabel}</span></div>
       <OrderRiskPreview productType={productType} side={side} amount={amount} orderType={orderType} />
-      <button className={`submit-btn ${side === 'buy' ? 'submit-buy' : 'submit-sell'}`} onClick={openModal}>
-        {submitted ? '委託已記錄（模擬）' : `送出${orderAction}委託`}
-      </button>
+      <div className="submit-actions">
+        <button className={`submit-btn ${side === 'buy' ? 'submit-buy' : 'submit-sell'}`} onClick={() => openModal('normal')}>
+          {submitted ? '已記錄' : '一般下單'}
+        </button>
+        <button className="submit-btn submit-lightning" onClick={openLightning}>
+          閃電交易
+        </button>
+      </div>
+      <div className="submit-hint">目前委託：{orderAction} · {orderType === 'market' ? '市價' : '限價'} · {timeInForce}</div>
       <Divider />
       <div className="section-title">未成交委託</div>
       <PendingOrder tone="pnl-pos" text="買進 2317 鴻海" detail="限價 168.00 × 8張 | 永豐A" />
@@ -896,6 +916,123 @@ function getOrderAction(productType, side) {
   if (productType === 'margin') return side === 'buy' ? '融資買進' : '融資賣出/償還';
   if (productType === 'short') return side === 'buy' ? '融券買回' : '融券賣出';
   return side === 'buy' ? '現股買進' : '現股賣出';
+}
+
+function LightningTradePage({ selected, setSelected, onBack }) {
+  const [query, setQuery] = useState(selected.sym);
+  const [productType, setProductType] = useState('cash');
+  const [timeInForce, setTimeInForce] = useState('ROD');
+  const [qty, setQty] = useState(1);
+  const [notice, setNotice] = useState('');
+  const quote = watchlist.find((item) => item.sym === query.trim()) || selected;
+  const numericPrice = Number(String(quote.price).replace(',', '')) || 100;
+  const steps = [-3, -2, -1, 0, 1, 2, 3, 4, 5];
+  const ladder = steps.map((step, index) => {
+    const price = Math.max(1, numericPrice + (step * 0.5));
+    return {
+      price: price.toFixed(price >= 1000 ? 0 : 1),
+      bid: step <= 0 ? [34, 140, 191, 169, 107][Math.abs(step)] || '' : '',
+      ask: step >= 1 ? [27, 13, 59, 27, 11][index % 5] || '' : '',
+      current: step === 0,
+    };
+  }).reverse();
+
+  function searchSymbol() {
+    const found = watchlist.find((item) => item.sym === query.trim());
+    if (found) {
+      setSelected(found);
+      setNotice(`已載入 ${found.sym} ${found.name} 即時報價`);
+    } else {
+      setNotice('找不到此代號，可試 2330、2317、2454、2881、0050');
+    }
+  }
+
+  function sendLightningOrder(side, price) {
+    const action = side === 'buy' ? '買進' : '賣出';
+    setNotice(`閃電交易已送出：${quote.sym} ${quote.name} ${action} ${qty} 張 @ ${price}（模擬）`);
+  }
+
+  return (
+    <div className="lightning-page">
+      <div className="lightning-top">
+        <button className="lightning-back" onClick={onBack}>‹</button>
+        <div>
+          <div className="lightning-title">證券閃電下單</div>
+          <div className="lightning-account">永豐 證-模擬交易(內建)-01</div>
+        </div>
+        <Badge color="amber">快速模式</Badge>
+      </div>
+
+      <div className="lightning-search-row">
+        <label className="lightning-search">
+          <span>搜尋商品</span>
+          <input value={query} onChange={(event) => setQuery(event.target.value)} onKeyDown={(event) => event.key === 'Enter' && searchSymbol()} placeholder="請輸入股票代號" />
+        </label>
+        <button className="action-btn primary" onClick={searchSymbol}>查詢</button>
+      </div>
+
+      <div className="lightning-quote">
+        <div>
+          <span className="stat-label">商品</span>
+          <strong>{quote.name} {quote.sym}</strong>
+        </div>
+        <div>
+          <span className="stat-label">成交價</span>
+          <strong className={quote.up === false ? 'pnl-neg' : 'pnl-pos'}>{quote.price}</strong>
+        </div>
+        <div>
+          <span className="stat-label">漲跌</span>
+          <strong className={quote.up === false ? 'pnl-neg' : 'pnl-pos'}>{quote.up === false ? '▼' : '▲'} {quote.change}</strong>
+        </div>
+        <div>
+          <span className="stat-label">成交量</span>
+          <strong>42,851</strong>
+        </div>
+      </div>
+
+      <div className="lightning-note">本頁面為閃電下單模式，點擊價格會直接送出該價格之模擬委託單。</div>
+
+      <div className="lightning-ladder">
+        <div className="ladder-head ladder-cancel">買全刪</div>
+        <div className="ladder-head ladder-buy">委買</div>
+        <div className="ladder-head ladder-price">價格</div>
+        <div className="ladder-head ladder-sell">委賣</div>
+        <div className="ladder-head ladder-cancel">賣全刪</div>
+        {ladder.map((row) => (
+          <React.Fragment key={row.price}>
+            <button className="ladder-cell ladder-cancel" onClick={() => setNotice('買方刪單功能已記錄（模擬）')}>{row.bid ? '×' : ''}</button>
+            <button className="ladder-cell ladder-buy" onClick={() => sendLightningOrder('buy', row.price)}>{row.bid}</button>
+            <button className={`ladder-cell ladder-price ${row.current ? 'current' : ''}`} onClick={() => sendLightningOrder('buy', row.price)}>{row.price}</button>
+            <button className="ladder-cell ladder-sell" onClick={() => sendLightningOrder('sell', row.price)}>{row.ask}</button>
+            <button className="ladder-cell ladder-cancel" onClick={() => setNotice('賣方刪單功能已記錄（模擬）')}>{row.ask ? '×' : ''}</button>
+          </React.Fragment>
+        ))}
+      </div>
+
+      <div className="lightning-bottom">
+        <select value={productType} onChange={(event) => setProductType(event.target.value)}>
+          <option value="cash">現股</option>
+          <option value="margin">融資</option>
+          <option value="short">融券</option>
+        </select>
+        <select value={timeInForce} onChange={(event) => setTimeInForce(event.target.value)}>
+          <option>ROD</option>
+          <option>IOC</option>
+          <option>FOK</option>
+        </select>
+        <div className="lightning-stepper">
+          <button onClick={() => setQty(Math.max(1, qty - 1))}>−</button>
+          <strong>{qty}</strong>
+          <button onClick={() => setQty(qty + 1)}>＋</button>
+        </div>
+      </div>
+
+      <div className="lightning-status">
+        <span>{productType === 'cash' ? '現股' : productType === 'margin' ? '融資' : '融券'} · {timeInForce} · {qty} 張</span>
+        <strong>{notice || '等待點擊價格送出委託'}</strong>
+      </div>
+    </div>
+  );
 }
 
 function OrderRiskPreview({ productType, side, amount, orderType }) {
@@ -958,11 +1095,12 @@ function PendingOrder({ tone, text, detail }) {
   );
 }
 
-function ConfirmModal({ selected, side, orderType, tradeSession, productType, timeInForce, qty, price, amount, close, confirm }) {
+function ConfirmModal({ selected, side, orderType, tradeSession, productType, timeInForce, qty, price, amount, submitMode, close, confirm }) {
   const numericPrice = Number(String(price).replace(',', '')) || 0;
   const action = getOrderAction(productType, side);
   const productLabel = productType === 'margin' ? '融資' : productType === 'short' ? '融券' : '現股';
   const sessionLabel = tradeSession === 'after' ? '盤後' : tradeSession === 'odd' ? '盤後零股' : '整股';
+  const submitModeLabel = submitMode === 'lightning' ? '閃電交易' : '一般下單';
   const reason = orderType === 'market'
     ? '原因：市價單，Phase 1 模擬模式強制確認'
     : productType === 'margin'
@@ -975,10 +1113,11 @@ function ConfirmModal({ selected, side, orderType, tradeSession, productType, ti
   return (
     <div className="modal-overlay show">
       <div className="modal-box">
-        <div className="modal-header"><span className="modal-warn-icon"><AlertTriangle size={18} /></span><span className="modal-title">確認送出委託</span></div>
+        <div className="modal-header"><span className="modal-warn-icon"><AlertTriangle size={18} /></span><span className="modal-title">確認{submitModeLabel}</span></div>
         <div className="modal-reason">{reason}</div>
         <div className="modal-grid">
           <ModalField label="使用帳號" value="永豐證券 A" />
+          <ModalField label="下單模式" value={submitModeLabel} tone={submitMode === 'lightning' ? 'val-amber' : ''} />
           <ModalField label="商品" value={`${selected.sym} ${selected.name}`} />
           <ModalField label="交易種類" value={productLabel} tone={productType === 'margin' ? 'val-amber' : productType === 'short' ? 'val-blue' : ''} />
           <ModalField label="交易時段" value={sessionLabel} />
@@ -998,7 +1137,7 @@ function ConfirmModal({ selected, side, orderType, tradeSession, productType, ti
         <div className="modal-phase-note">PHASE 1 模擬模式 — 此委託不會送至真實券商，僅記錄稽核 log</div>
         <div className="modal-actions">
           <button className="modal-cancel" onClick={close}>取消</button>
-          <button className="modal-confirm" onClick={confirm}>確認送出</button>
+          <button className="modal-confirm" onClick={confirm}>確認{submitModeLabel}</button>
         </div>
       </div>
     </div>

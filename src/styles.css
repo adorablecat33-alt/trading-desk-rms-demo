@@ -211,9 +211,198 @@ button { cursor: pointer; }
   color: var(--accent-blue);
   font-weight: 700;
 }
+.submit-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
 .submit-btn { width: 100%; padding: 10px; border-radius: 5px; font-size: 13px; font-weight: 700; transition: .2s; letter-spacing: .04em; }
 .submit-buy { background: rgba(46,204,138,.2); color: var(--accent-green); border: 1px solid rgba(46,204,138,.4); }
 .submit-sell { background: rgba(255,77,106,.2); color: var(--accent-red); border: 1px solid rgba(255,77,106,.4); }
+.submit-lightning {
+  background: rgba(245,166,35,.2);
+  color: var(--accent-amber);
+  border: 1px solid rgba(245,166,35,.45);
+}
+.submit-btn:hover {
+  filter: brightness(1.14);
+}
+.submit-hint {
+  color: var(--text-muted);
+  font-size: 12px;
+  line-height: 1.4;
+}
+.lightning-page {
+  min-height: calc(100vh - 92px);
+  background: #030405;
+  color: var(--text-primary);
+  display: flex;
+  flex-direction: column;
+}
+.lightning-top {
+  display: grid;
+  grid-template-columns: 52px 1fr auto;
+  align-items: center;
+  gap: 12px;
+  padding: 18px 18px 14px;
+  background: #050607;
+  border-bottom: 1px solid var(--border);
+}
+.lightning-back {
+  width: 42px;
+  height: 42px;
+  border: none;
+  background: transparent;
+  color: var(--text-primary);
+  font-size: 40px;
+  line-height: 1;
+}
+.lightning-title {
+  font-size: 24px;
+  font-weight: 700;
+  text-align: center;
+}
+.lightning-account {
+  color: var(--text-secondary);
+  font-size: 14px;
+  text-align: center;
+}
+.lightning-search-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 96px;
+  gap: 10px;
+  padding: 12px 16px;
+  background: #090b0d;
+}
+.lightning-search {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: #1a1f24;
+  border-radius: 8px;
+  padding: 0 12px;
+  border: 1px solid rgba(255,255,255,.08);
+}
+.lightning-search span {
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+.lightning-search input {
+  min-height: 46px;
+  flex: 1;
+  background: transparent;
+  border: none;
+  color: var(--text-primary);
+  font: inherit;
+  font-size: 20px;
+}
+.lightning-search input:focus { outline: none; }
+.lightning-quote {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 1px;
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  background: var(--border);
+}
+.lightning-quote > div {
+  background: #050607;
+  padding: 12px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.lightning-quote strong {
+  font-size: 22px;
+}
+.lightning-note {
+  padding: 9px 16px;
+  color: #ffd166;
+  background: rgba(245,166,35,.12);
+  border-bottom: 1px solid rgba(245,166,35,.22);
+  text-align: center;
+}
+.lightning-ladder {
+  flex: 1;
+  display: grid;
+  grid-template-columns: .8fr 1fr 1.65fr 1fr .8fr;
+  grid-auto-rows: minmax(48px, 1fr);
+  background: #050607;
+  min-height: 520px;
+}
+.ladder-head,
+.ladder-cell {
+  border: none;
+  border-right: 1px solid rgba(255,255,255,.18);
+  border-bottom: 1px solid rgba(255,255,255,.16);
+  color: var(--text-primary);
+  font: inherit;
+  font-size: 20px;
+}
+.ladder-head {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  min-height: 58px;
+}
+.ladder-cell {
+  background: transparent;
+  font-weight: 700;
+}
+.ladder-buy { background: rgba(224,29,87,.88); }
+.ladder-sell { background: rgba(12,166,75,.9); }
+.ladder-price {
+  background: #151515;
+  color: #12a553;
+}
+.ladder-price.current {
+  box-shadow: inset 0 0 0 2px rgba(255,255,255,.92);
+  color: #e8eaf0;
+}
+.ladder-cancel { background: rgba(255,255,255,.06); color: rgba(255,255,255,.75); }
+.lightning-bottom {
+  display: grid;
+  grid-template-columns: 1fr 1fr 2fr;
+  gap: 8px;
+  padding: 12px 16px;
+  background: #070809;
+  border-top: 1px solid var(--border);
+}
+.lightning-bottom select,
+.lightning-stepper {
+  min-height: 48px;
+  background: #242424;
+  color: var(--text-primary);
+  border: 1px solid rgba(255,255,255,.14);
+  border-radius: 6px;
+  font: inherit;
+  padding: 0 12px;
+}
+.lightning-stepper {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  align-items: center;
+  text-align: center;
+}
+.lightning-stepper button {
+  border: none;
+  background: transparent;
+  color: var(--text-primary);
+  font-size: 28px;
+}
+.lightning-status {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 10px 16px 14px;
+  background: #070809;
+  color: var(--text-secondary);
+}
+.lightning-status strong {
+  color: var(--accent-amber);
+  text-align: right;
+}
 .estimated-amt { background: rgba(255,255,255,.04); border-radius: 4px; padding: 8px 10px; display: flex; justify-content: space-between; align-items: center; }
 .est-label, .acct-remain { font-size: 12px; color: var(--text-muted); }
 .est-val { font-size: 15px; font-weight: 700; color: var(--accent-amber); }
@@ -831,6 +1020,7 @@ input:checked + .toggle-slider:before { transform: translateX(16px); }
   .tab-nav { top: 78px; }
   .margin-warning-bar { top: 116px; flex-direction: column; }
   .trader-layout { grid-template-columns: 1fr; }
+  .lightning-quote { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .trader-sidebar, .trader-order { border-right: none; border-left: none; border-bottom: 1px solid var(--border); }
   .positions-workspace { grid-template-columns: 1fr; }
   .trader-switcher { position: static; }
@@ -858,4 +1048,13 @@ input:checked + .toggle-slider:before { transform: translateX(16px); }
   .inquiry-tabs button { border-right: none; }
   .inquiry-toolbar { grid-template-columns: 1fr; }
   .settlement-day { align-items: flex-start; flex-direction: column; }
+  .lightning-top { grid-template-columns: 42px 1fr auto; padding-left: 10px; padding-right: 10px; }
+  .lightning-title { font-size: 19px; }
+  .lightning-search-row { grid-template-columns: 1fr; padding-left: 10px; padding-right: 10px; }
+  .lightning-quote { grid-template-columns: 1fr 1fr; }
+  .lightning-ladder { grid-template-columns: .7fr 1fr 1.45fr 1fr .7fr; grid-auto-rows: 54px; min-height: 0; }
+  .ladder-head, .ladder-cell { font-size: 16px; }
+  .lightning-bottom { grid-template-columns: 1fr; padding-left: 10px; padding-right: 10px; }
+  .lightning-status { flex-direction: column; }
+  .lightning-status strong { text-align: left; }
 }
