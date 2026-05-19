@@ -255,9 +255,28 @@ button { cursor: pointer; }
 .pnl-tbl td { padding: 3px 2px; font-size: 11px; }
 .pnl-tbl td:last-child { text-align: right; font-weight: 600; }
 .pnl-tbl .total-row td { border-top: 1px solid var(--border-bright); padding-top: 5px; font-size: 13px; }
-.main-sub-nav { display: flex; border-bottom: 1px solid var(--border); margin-bottom: 8px; overflow-x: auto; }
-.sub-tab { padding: 6px 14px; font-size: 13px; color: var(--text-secondary); background: none; border: none; border-bottom: 2px solid transparent; white-space: nowrap; }
-.sub-tab.active { color: var(--accent-teal); border-bottom-color: var(--accent-teal); }
+.main-sub-nav {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(120px, 1fr));
+  gap: 10px;
+  margin-bottom: 12px;
+}
+.sub-tab {
+  min-height: 58px;
+  padding: 10px 14px;
+  font-size: 16px;
+  color: var(--text-secondary);
+  background: #050505;
+  border: 1px solid rgba(255,255,255,.32);
+  border-radius: 6px;
+  white-space: nowrap;
+  font-weight: 700;
+}
+.sub-tab.active {
+  color: var(--accent-teal);
+  border-color: var(--accent-teal);
+  background: rgba(45,212,191,.08);
+}
 .form-field { display: flex; flex-direction: column; gap: 4px; }
 .form-line { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
 .form-label { font-size: 12px; color: var(--text-muted); text-transform: uppercase; letter-spacing: .08em; }
@@ -1114,6 +1133,7 @@ input:checked + .toggle-slider:before { transform: translateX(16px); }
   .tab-nav { top: 78px; }
   .margin-warning-bar { top: 116px; flex-direction: column; }
   .trader-layout { grid-template-columns: 1fr; }
+  .main-sub-nav { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .futures-action-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .futures-equity-summary { grid-template-columns: 1fr; }
   .lightning-quote { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -1145,6 +1165,7 @@ input:checked + .toggle-slider:before { transform: translateX(16px); }
   .inquiry-toolbar { grid-template-columns: 1fr; }
   .settlement-day { align-items: flex-start; flex-direction: column; }
   .trade-entry-bar { margin-left: 10px; margin-right: 10px; }
+  .main-sub-nav { grid-template-columns: 1fr 1fr; }
   .futures-desk { padding-left: 10px; padding-right: 10px; }
   .futures-action-grid { grid-template-columns: 1fr 1fr; }
   .futures-panel-head { align-items: stretch; }

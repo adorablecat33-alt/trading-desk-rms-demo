@@ -874,11 +874,6 @@ function FuturesDesk() {
   return (
     <section className="futures-desk">
       <div className="futures-top">
-        <div className="futures-product-tabs">
-          <button className="active">期貨</button>
-          <button>選擇權</button>
-          <button>複委託</button>
-        </div>
         <div className="futures-account-select">
           <span>期</span>
           <select value={selectedAccountId} onChange={(event) => setSelectedAccountId(event.target.value)}>
