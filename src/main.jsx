@@ -93,6 +93,89 @@ const adminMatrix = {
   小林: { cells: ['—', '+$7,800', '+$5,000', '+$12,800', '+$96,000', '+$108,800', '正常'] },
 };
 
+const traderAccountOptions = [
+  {
+    id: 'sinopac-a',
+    label: '永豐 證-敦南0388939-王震宇',
+    shortName: '永豐A',
+    broker: '永豐證券',
+    type: '證券',
+    status: '連線正常',
+    remaining: '$12,000,000',
+    quotaUsedLabel: '帳號額度 60%',
+    quotaValue: '$12M / $20M',
+    quotaPercent: 60,
+    quotaColor: 'amber',
+    realized: '+$32,500',
+    unrealized: '+$541,000',
+    turnover: '$8,200,000',
+  },
+  {
+    id: 'fubon-b',
+    label: '富邦 證-台北8822144-王震宇',
+    shortName: '富邦B',
+    broker: '富邦證券',
+    type: '證券',
+    status: '連線正常',
+    remaining: '$9,750,000',
+    quotaUsedLabel: '帳號額度 35%',
+    quotaValue: '$5.25M / $15M',
+    quotaPercent: 35,
+    quotaColor: 'green',
+    realized: '+$8,000',
+    unrealized: '+$200,000',
+    turnover: '$5,250,000',
+  },
+];
+
+const futuresAccountOptions = [
+  {
+    id: 'sinopac-fut-tpe',
+    label: '永豐 期-台北3240627-王震宇',
+    shortName: '永豐期',
+    status: '連線正常',
+    currency: '新台幣',
+    equity: '$57,271,461',
+    availableMargin: '$29,873,072',
+    riskRatio: '225%',
+  },
+  {
+    id: 'sinopac-fut-intl',
+    label: '永豐 期-海外7788123-王震宇',
+    shortName: '海外期',
+    status: '連線正常',
+    currency: '美元',
+    equity: '$428,600',
+    availableMargin: '$188,200',
+    riskRatio: '184%',
+  },
+];
+
+const futuresPositions = [
+  ['旺宏期056', '買進', '145.5s', '10口', '167.75', '-445,000'],
+  ['旺宏期066', '買進', '146.5s', '40口', '166.15', '-1,572,000'],
+  ['華通期066', '買進', '259.5s', '43口', '247.63', '+1,020,820'],
+  ['漢唐期066', '買進', '1,035s', '9口', '1,041.11', '-109,980'],
+  ['威剛期066', '買進', '392.0s', '33口', '413.23', '-1,401,180'],
+  ['台耀期066', '買進', '1,225s', '6口', '1,297.5', '-870,000'],
+  ['台半期066', '買進', '87.4s', '10口', '82.02', '+107,600'],
+  ['台股指數056', '賣出', '40,240', '2口', '40,283', '+17,200'],
+];
+
+const futuresEquityRows = [
+  ['前日餘額', '61,725,290.00'],
+  ['存提', '0.00'],
+  ['手續費', '1,880.00'],
+  ['期交稅', '1,949.00'],
+  ['本日期貨平倉損益淨額', '-4,450,000.00'],
+  ['本日餘額', '57,271,461.00'],
+  ['未沖銷期貨浮動損益', '-3,588,220.07'],
+  ['原始保證金', '23,810,169.00'],
+  ['維持保證金', '16,998,366.00'],
+  ['可動用(出金)保證金', '29,873,072.00'],
+  ['風險指標', '225%'],
+];
+
 function Badge({ color = 'gray', children }) {
   return <span className={`badge badge-${color}`}>{children}</span>;
 }
@@ -607,9 +690,11 @@ function TraderPositionBlock({ trader, compactHeader = false }) {
 }
 
 function TraderTab() {
+  const [tradeEntry, setTradeEntry] = useState('stock');
   const [sub, setSub] = useState('chart');
   const [selected, setSelected] = useState(watchlist[0]);
   const [lightningOpen, setLightningOpen] = useState(false);
+  const [selectedAccountId, setSelectedAccountId] = useState(traderAccountOptions[0].id);
   const [side, setSide] = useState('buy');
   const [orderType, setOrderType] = useState('limit');
   const [tradeSession, setTradeSession] = useState('regular');
@@ -622,6 +707,7 @@ function TraderTab() {
   const [submitted, setSubmitted] = useState(false);
   const numericPrice = Number(String(price).replace(',', '')) || 0;
   const amount = Number(qty || 0) * numericPrice * 1000;
+  const selectedAccount = traderAccountOptions.find((account) => account.id === selectedAccountId) || traderAccountOptions[0];
   const subTabs = [['chart', 'K 線圖'], ['my-pos', '我的持倉'], ['orders', '委託記錄'], ['trades', '成交記錄']];
 
   const selectSymbol = (item) => {
@@ -641,29 +727,52 @@ function TraderTab() {
   };
 
   if (lightningOpen) {
-    return <LightningTradePage selected={selected} setSelected={setSelected} onBack={() => setLightningOpen(false)} />;
+    return (
+      <LightningTradePage
+        selected={selected}
+        setSelected={setSelected}
+        accountOptions={traderAccountOptions}
+        selectedAccountId={selectedAccountId}
+        setSelectedAccountId={setSelectedAccountId}
+        selectedAccount={selectedAccount}
+        onBack={() => setLightningOpen(false)}
+      />
+    );
   }
 
   return (
     <div>
+      <div className="trade-entry-bar">
+        <button className={tradeEntry === 'stock' ? 'active' : ''} onClick={() => setTradeEntry('stock')}>股票</button>
+        <button className={tradeEntry === 'futures' ? 'active' : ''} onClick={() => setTradeEntry('futures')}>期貨</button>
+      </div>
+      {tradeEntry === 'stock' && (
       <div className="acct-status-banner">
         <div className="acct-status-row">
           <div className="acct-name-group">
             <Dot color="green" />
-            <span className="acct-name">永豐證券 A</span>
+            <select className="account-inline-select" value={selectedAccountId} onChange={(event) => setSelectedAccountId(event.target.value)}>
+              {traderAccountOptions.map((account) => (
+                <option value={account.id} key={account.id}>{account.label}</option>
+              ))}
+            </select>
             <Badge color="green">連線正常</Badge>
             <Badge color="amber">PHASE 1 模擬</Badge>
           </div>
           <div className="stat-group">
-            <Stat label="今日已實現" value="+$32,500" tone="pnl-pos" />
-            <Stat label="未實現損益" value="+$541,000" tone="pnl-pos" />
-            <Stat label="今日成交額" value="$8,200,000" tone="val-blue" />
+            <Stat label="今日已實現" value={selectedAccount.realized} tone="pnl-pos" />
+            <Stat label="未實現損益" value={selectedAccount.unrealized} tone="pnl-pos" />
+            <Stat label="今日成交額" value={selectedAccount.turnover} tone="val-blue" />
             <Stat label="風控狀態" value="● 正常" tone="pnl-pos" />
           </div>
-          <QuotaBar label="帳號額度 60%" value="$12M / $20M" percent={60} color="amber" />
+          <QuotaBar label={selectedAccount.quotaUsedLabel} value={selectedAccount.quotaValue} percent={selectedAccount.quotaPercent} color={selectedAccount.quotaColor} />
         </div>
       </div>
+      )}
 
+      {tradeEntry === 'futures' ? (
+        <FuturesDesk />
+      ) : (
       <div className="trader-layout">
         <aside className="trader-sidebar">
           <SidebarQuotes selected={selected} onSelect={selectSymbol} />
@@ -714,14 +823,19 @@ function TraderTab() {
             price={price}
             setPrice={setPrice}
             amount={amount}
+            accountOptions={traderAccountOptions}
+            selectedAccountId={selectedAccountId}
+            setSelectedAccountId={setSelectedAccountId}
+            selectedAccount={selectedAccount}
             submitted={submitted}
             openModal={openOrderModal}
             openLightning={() => setLightningOpen(true)}
           />
         </aside>
       </div>
+      )}
 
-      <Ticker />
+      {tradeEntry === 'stock' && <Ticker />}
       {modalOpen && (
         <ConfirmModal
           selected={selected}
@@ -733,11 +847,147 @@ function TraderTab() {
           qty={qty}
           price={price}
           amount={amount}
+          selectedAccount={selectedAccount}
           submitMode={orderSubmitMode}
           close={() => setModalOpen(false)}
           confirm={confirmOrder}
         />
       )}
+    </div>
+  );
+}
+
+function FuturesDesk() {
+  const [selectedAccountId, setSelectedAccountId] = useState(futuresAccountOptions[0].id);
+  const [view, setView] = useState('positions');
+  const [currency, setCurrency] = useState('twd');
+  const account = futuresAccountOptions.find((item) => item.id === selectedAccountId) || futuresAccountOptions[0];
+  const viewTitle = {
+    positions: '未平倉總覽',
+    equity: '期權帳戶權益',
+    pnl: '平倉損益',
+    trades: '歷史成交',
+    statement: '對帳單',
+    margin: '維持率',
+  }[view];
+
+  return (
+    <section className="futures-desk">
+      <div className="futures-top">
+        <div className="futures-product-tabs">
+          <button className="active">期貨</button>
+          <button>選擇權</button>
+          <button>複委託</button>
+        </div>
+        <div className="futures-account-select">
+          <span>期</span>
+          <select value={selectedAccountId} onChange={(event) => setSelectedAccountId(event.target.value)}>
+            {futuresAccountOptions.map((item) => (
+              <option value={item.id} key={item.id}>{item.label}</option>
+            ))}
+          </select>
+        </div>
+      </div>
+
+      <div className="futures-action-grid">
+        {[
+          ['positions', '未平倉'],
+          ['equity', '權益數'],
+          ['pnl', '平倉損益'],
+          ['trades', '歷史成交'],
+          ['statement', '對帳單'],
+          ['margin', '維持率'],
+        ].map(([id, label]) => (
+          <button className={view === id ? 'active' : ''} key={id} onClick={() => setView(id)}>{label}</button>
+        ))}
+      </div>
+
+      <div className="futures-panel">
+        <div className="futures-panel-head">
+          <div>
+            <span className="stat-label">{account.shortName}</span>
+            <h2>{viewTitle}</h2>
+          </div>
+          <div className="futures-currency-tabs">
+            {[
+              ['twd', '新台幣'],
+              ['usd', '美金'],
+              ['cny', '人民幣'],
+              ['jpy', '日圓'],
+            ].map(([id, label]) => (
+              <button className={currency === id ? 'active' : ''} key={id} onClick={() => setCurrency(id)}>{label}</button>
+            ))}
+          </div>
+        </div>
+
+        {view === 'positions' && <FuturesPositionsTable />}
+        {view === 'equity' && <FuturesEquityPanel account={account} />}
+        {view !== 'positions' && view !== 'equity' && <FuturesPlaceholder view={view} />}
+      </div>
+
+      <div className="futures-footer">
+        <div>
+          <span>參考損益：台幣</span>
+          <strong className="pnl-neg">-3,768,140</strong>
+        </div>
+        <button>交易帳號管理</button>
+      </div>
+    </section>
+  );
+}
+
+function FuturesPositionsTable() {
+  return (
+    <div className="futures-position-table">
+      <div className="futures-row futures-head">
+        <span>商品/類別</span>
+        <span>現價/口數</span>
+        <span>均價/參考損益</span>
+      </div>
+      {futuresPositions.map(([name, side, price, qty, avg, pnl]) => (
+        <div className="futures-row" key={name}>
+          <span><strong>{name}</strong><em className={side === '賣出' ? 'pnl-pos' : 'pnl-neg'}>{side}</em></span>
+          <span><strong>{price}</strong><em>{qty}</em></span>
+          <span><strong>{avg}</strong><em className={pnl.startsWith('-') ? 'pnl-neg' : 'pnl-pos'}>{pnl}</em></span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function FuturesEquityPanel({ account }) {
+  return (
+    <div className="futures-equity-panel">
+      <div className="futures-equity-summary">
+        <Stat label="權益數" value={account.equity} tone="val-blue" />
+        <Stat label="可動用保證金" value={account.availableMargin} tone="pnl-pos" />
+        <Stat label="風險指標" value={account.riskRatio} tone="val-amber" />
+      </div>
+      <div className="futures-equity-list">
+        <div className="futures-equity-head"><span>項目</span><span>資料</span></div>
+        {futuresEquityRows.map(([label, value]) => (
+          <div className="futures-equity-row" key={label}>
+            <span>{label}</span>
+            <strong className={String(value).startsWith('-') ? 'pnl-neg' : ''}>{value}</strong>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function FuturesPlaceholder({ view }) {
+  const content = {
+    pnl: ['區間平倉損益', '-4,450,000', '可選日期區間並匯出 CSV'],
+    trades: ['歷史成交', '18 筆', '期貨成交回報與手續費明細'],
+    statement: ['對帳單', '本月', '買賣、入出金、保證金變動'],
+    margin: ['維持率', '225%', '低於 150% 進入風控觀察'],
+  }[view];
+  return (
+    <div className="futures-placeholder">
+      <span className="stat-label">{content[0]}</span>
+      <strong className={String(content[1]).startsWith('-') ? 'pnl-neg' : 'val-blue'}>{content[1]}</strong>
+      <p>{content[2]}</p>
     </div>
   );
 }
@@ -822,6 +1072,10 @@ function OrderPanel({
   price,
   setPrice,
   amount,
+  accountOptions,
+  selectedAccountId,
+  setSelectedAccountId,
+  selectedAccount,
   submitted,
   openModal,
   openLightning,
@@ -878,8 +1132,12 @@ function OrderPanel({
       </Field>
       <Field label="委託價格"><input className="form-input" value={orderType === 'market' ? '市價' : price} disabled={orderType === 'market'} onChange={(e) => setPrice(e.target.value)} /></Field>
       <Field label="數量（張）"><input className="form-input" value={qty} onChange={(e) => setQty(e.target.value)} /></Field>
-      <Field label="使用帳號" right="剩餘：$12,000,000">
-        <select className="form-select"><option>永豐A — 主帳號</option><option>富邦B — 備援帳號1</option><option disabled>群益C — 重連中</option></select>
+      <Field label="使用帳號" right={`剩餘：${selectedAccount.remaining}`}>
+        <select className="form-select" value={selectedAccountId} onChange={(event) => setSelectedAccountId(event.target.value)}>
+          {accountOptions.map((account) => (
+            <option value={account.id} key={account.id}>{account.shortName} — {account.broker}</option>
+          ))}
+        </select>
       </Field>
       <div className="estimated-amt"><span className="est-label">預估金額</span><span className="est-val">{amountLabel}</span></div>
       <OrderRiskPreview productType={productType} side={side} amount={amount} orderType={orderType} />
@@ -918,7 +1176,7 @@ function getOrderAction(productType, side) {
   return side === 'buy' ? '現股買進' : '現股賣出';
 }
 
-function LightningTradePage({ selected, setSelected, onBack }) {
+function LightningTradePage({ selected, setSelected, accountOptions, selectedAccountId, setSelectedAccountId, selectedAccount, onBack }) {
   const [query, setQuery] = useState(selected.sym);
   const [productType, setProductType] = useState('cash');
   const [timeInForce, setTimeInForce] = useState('ROD');
@@ -949,7 +1207,7 @@ function LightningTradePage({ selected, setSelected, onBack }) {
 
   function sendLightningOrder(side, price) {
     const action = side === 'buy' ? '買進' : '賣出';
-    setNotice(`閃電交易已送出：${quote.sym} ${quote.name} ${action} ${qty} 張 @ ${price}（模擬）`);
+    setNotice(`閃電交易已送出：${selectedAccount.shortName} · ${quote.sym} ${quote.name} ${action} ${qty} 張 @ ${price}（模擬）`);
   }
 
   return (
@@ -958,9 +1216,18 @@ function LightningTradePage({ selected, setSelected, onBack }) {
         <button className="lightning-back" onClick={onBack}>‹</button>
         <div>
           <div className="lightning-title">證券閃電下單</div>
-          <div className="lightning-account">永豐 證-模擬交易(內建)-01</div>
+          <div className="lightning-account">{selectedAccount.label}</div>
         </div>
         <Badge color="amber">快速模式</Badge>
+      </div>
+
+      <div className="lightning-account-row">
+        <span>{selectedAccount.type}</span>
+        <select value={selectedAccountId} onChange={(event) => setSelectedAccountId(event.target.value)}>
+          {accountOptions.map((account) => (
+            <option value={account.id} key={account.id}>{account.label}</option>
+          ))}
+        </select>
       </div>
 
       <div className="lightning-search-row">
@@ -1095,7 +1362,7 @@ function PendingOrder({ tone, text, detail }) {
   );
 }
 
-function ConfirmModal({ selected, side, orderType, tradeSession, productType, timeInForce, qty, price, amount, submitMode, close, confirm }) {
+function ConfirmModal({ selected, side, orderType, tradeSession, productType, timeInForce, qty, price, amount, selectedAccount, submitMode, close, confirm }) {
   const numericPrice = Number(String(price).replace(',', '')) || 0;
   const action = getOrderAction(productType, side);
   const productLabel = productType === 'margin' ? '融資' : productType === 'short' ? '融券' : '現股';
@@ -1116,7 +1383,7 @@ function ConfirmModal({ selected, side, orderType, tradeSession, productType, ti
         <div className="modal-header"><span className="modal-warn-icon"><AlertTriangle size={18} /></span><span className="modal-title">確認{submitModeLabel}</span></div>
         <div className="modal-reason">{reason}</div>
         <div className="modal-grid">
-          <ModalField label="使用帳號" value="永豐證券 A" />
+          <ModalField label="使用帳號" value={selectedAccount.label} />
           <ModalField label="下單模式" value={submitModeLabel} tone={submitMode === 'lightning' ? 'val-amber' : ''} />
           <ModalField label="商品" value={`${selected.sym} ${selected.name}`} />
           <ModalField label="交易種類" value={productLabel} tone={productType === 'margin' ? 'val-amber' : productType === 'short' ? 'val-blue' : ''} />
@@ -1130,8 +1397,8 @@ function ConfirmModal({ selected, side, orderType, tradeSession, productType, ti
         <Divider />
         <div className="modal-grid">
           <ModalField label="預估金額" value={`$${Math.round(amount).toLocaleString()}`} tone="big" />
-          <ModalField label="帳號剩餘額度" value="$8,000,000" />
-          <ModalField label="今日已實現損益" value="+$32,500" tone="pnl-pos" />
+          <ModalField label="帳號剩餘額度" value={selectedAccount.remaining} />
+          <ModalField label="今日已實現損益" value={selectedAccount.realized} tone="pnl-pos" />
           <ModalField label="風控狀態" value="通過" tone="pnl-pos" />
         </div>
         <div className="modal-phase-note">PHASE 1 模擬模式 — 此委託不會送至真實券商，僅記錄稽核 log</div>
@@ -1556,11 +1823,12 @@ function SectionHeader({ title, action }) {
 
 function App() {
   const [tab, setTab] = useState('trader');
+  const showMarginWarning = ['admin', 'accounts', 'risk', 'audit'].includes(tab);
   return (
     <>
       <StatusBar />
       <Tabs active={tab} setActive={setTab} />
-      <MarginWarningBar />
+      {showMarginWarning && <MarginWarningBar />}
       <div className="tab-content active">
         {tab === 'trader' && <TraderTab />}
         {tab === 'positions' && <PositionsTab />}

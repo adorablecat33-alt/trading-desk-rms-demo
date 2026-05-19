@@ -171,11 +171,79 @@ button { cursor: pointer; }
 .acct-status-row { background: rgba(255,255,255,.03); border: 1px solid var(--border); border-radius: 6px; padding: 10px 14px; display: flex; align-items: center; justify-content: space-between; gap: 14px; flex-wrap: wrap; }
 .acct-name-group { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 .acct-name { font-size: 15px; font-weight: 700; }
+.account-inline-select {
+  min-width: 270px;
+  max-width: min(520px, 100%);
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  border: 1px solid var(--border-bright);
+  border-radius: 6px;
+  padding: 8px 10px;
+  font: inherit;
+  font-weight: 700;
+}
+.account-inline-select:focus {
+  outline: none;
+  border-color: rgba(74,158,255,.65);
+  box-shadow: 0 0 0 3px rgba(74,158,255,.12);
+}
 .trader-layout { display: grid; grid-template-columns: 195px 1fr 240px; min-height: calc(100vh - 140px); }
 .trader-sidebar, .trader-order { background: var(--bg-card); padding: 12px; display: flex; flex-direction: column; gap: 10px; overflow-y: auto; }
 .trader-sidebar { border-right: 1px solid var(--border); }
 .trader-order { border-left: 1px solid var(--border); gap: 9px; }
 .trader-main { background: var(--bg-primary); padding: 12px; display: flex; flex-direction: column; gap: 10px; overflow: hidden; }
+.trade-entry-bar {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin: 12px 16px 0;
+  border: 1px solid rgba(245,166,35,.55);
+  border-radius: 6px;
+  overflow: hidden;
+  background: #050607;
+}
+.trade-entry-bar button {
+  min-height: 42px;
+  border: none;
+  border-right: 1px solid rgba(245,166,35,.45);
+  background: transparent;
+  color: #f5d35f;
+  font: inherit;
+  font-size: 18px;
+  font-weight: 700;
+}
+.trade-entry-bar button:last-child { border-right: none; }
+.trade-entry-bar button.active { background: #f2cf4b; color: #050607; }
+.futures-desk { min-height: calc(100vh - 165px); background: #020303; color: var(--text-primary); padding: 14px 16px 18px; display: flex; flex-direction: column; gap: 16px; }
+.futures-top { display: flex; flex-direction: column; gap: 12px; }
+.futures-product-tabs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); border: 1px solid #f2cf4b; border-radius: 5px; overflow: hidden; }
+.futures-product-tabs button, .futures-currency-tabs button { min-height: 38px; border: none; border-right: 1px solid rgba(242,207,75,.6); background: #030303; color: #f2cf4b; font: inherit; font-weight: 700; }
+.futures-product-tabs button:last-child, .futures-currency-tabs button:last-child { border-right: none; }
+.futures-product-tabs button.active, .futures-currency-tabs button.active { background: #f2cf4b; color: #060606; }
+.futures-account-select { display: grid; grid-template-columns: 54px minmax(0, 1fr); gap: 8px; }
+.futures-account-select span { display: grid; place-items: center; border: 1px solid rgba(255,255,255,.18); border-radius: 6px; color: var(--text-secondary); background: #242424; font-weight: 700; }
+.futures-account-select select { min-height: 46px; border: 1px solid rgba(255,255,255,.14); border-radius: 6px; background: #242424; color: var(--text-primary); font: inherit; padding: 0 12px; }
+.futures-action-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.futures-action-grid button { min-height: 78px; border: 1px solid rgba(255,255,255,.32); border-radius: 6px; background: #050505; color: var(--text-secondary); font: inherit; font-size: 20px; }
+.futures-action-grid button.active { border-color: #f2cf4b; color: #f2cf4b; }
+.futures-panel { border: 1px solid rgba(255,255,255,.08); border-radius: 8px; overflow: hidden; background: #050505; }
+.futures-panel-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 16px; border-bottom: 1px solid rgba(255,255,255,.12); flex-wrap: wrap; }
+.futures-panel-head h2 { font-size: 22px; margin-top: 4px; }
+.futures-currency-tabs { display: grid; grid-template-columns: repeat(4, minmax(78px, 1fr)); border: 1px solid rgba(255,255,255,.32); border-radius: 5px; overflow: hidden; }
+.futures-position-table, .futures-equity-list { display: flex; flex-direction: column; }
+.futures-row, .futures-equity-row, .futures-equity-head { display: grid; grid-template-columns: 1.2fr 1fr 1.2fr; gap: 10px; align-items: center; min-height: 62px; padding: 10px 16px; border-bottom: 1px solid rgba(255,255,255,.16); }
+.futures-row:nth-child(even), .futures-equity-row:nth-child(odd) { background: rgba(255,255,255,.08); }
+.futures-row span { display: flex; flex-direction: column; gap: 4px; }
+.futures-row em { font-style: normal; color: var(--text-secondary); }
+.futures-row span:nth-child(2), .futures-row span:nth-child(3) { text-align: right; }
+.futures-head, .futures-equity-head { background: #151a1c; color: var(--text-secondary); font-weight: 700; }
+.futures-equity-summary { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; padding: 14px 16px; border-bottom: 1px solid rgba(255,255,255,.12); }
+.futures-equity-row, .futures-equity-head { grid-template-columns: minmax(0, 1fr) 220px; }
+.futures-equity-row strong, .futures-equity-head span:last-child { text-align: right; }
+.futures-placeholder { min-height: 240px; display: grid; place-content: center; text-align: center; gap: 10px; color: var(--text-secondary); }
+.futures-placeholder strong { font-size: 32px; }
+.futures-footer { margin-top: auto; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding-top: 8px; flex-wrap: wrap; }
+.futures-footer div { display: flex; gap: 8px; font-size: 20px; }
+.futures-footer button { min-width: 240px; min-height: 48px; border: 1px solid #f2cf4b; border-radius: 6px; background: transparent; color: #f2cf4b; font: inherit; font-size: 18px; font-weight: 700; }
 .sidebar-section { display: flex; flex-direction: column; gap: 5px; }
 .section-title { font-size: 12px; color: var(--text-muted); text-transform: uppercase; letter-spacing: .1em; padding-bottom: 5px; border-bottom: 1px solid var(--border); margin-bottom: 2px; }
 .quote-row { display: flex; justify-content: space-between; align-items: center; padding: 5px 6px; border-radius: 4px; transition: background .15s; background: none; border: none; color: inherit; text-align: left; width: 100%; }
@@ -266,6 +334,32 @@ button { cursor: pointer; }
   color: var(--text-secondary);
   font-size: 14px;
   text-align: center;
+}
+.lightning-account-row {
+  display: grid;
+  grid-template-columns: 64px minmax(0, 1fr);
+  gap: 8px;
+  align-items: center;
+  padding: 10px 16px;
+  background: #050607;
+  border-bottom: 1px solid var(--border);
+}
+.lightning-account-row span {
+  display: grid;
+  place-items: center;
+  height: 42px;
+  border: 1px solid rgba(255,255,255,.18);
+  border-radius: 6px;
+  color: var(--text-secondary);
+}
+.lightning-account-row select {
+  min-height: 42px;
+  background: #242424;
+  color: var(--text-primary);
+  border: 1px solid rgba(255,255,255,.16);
+  border-radius: 6px;
+  padding: 0 12px;
+  font: inherit;
 }
 .lightning-search-row {
   display: grid;
@@ -1020,6 +1114,8 @@ input:checked + .toggle-slider:before { transform: translateX(16px); }
   .tab-nav { top: 78px; }
   .margin-warning-bar { top: 116px; flex-direction: column; }
   .trader-layout { grid-template-columns: 1fr; }
+  .futures-action-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .futures-equity-summary { grid-template-columns: 1fr; }
   .lightning-quote { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .trader-sidebar, .trader-order { border-right: none; border-left: none; border-bottom: 1px solid var(--border); }
   .positions-workspace { grid-template-columns: 1fr; }
@@ -1048,8 +1144,18 @@ input:checked + .toggle-slider:before { transform: translateX(16px); }
   .inquiry-tabs button { border-right: none; }
   .inquiry-toolbar { grid-template-columns: 1fr; }
   .settlement-day { align-items: flex-start; flex-direction: column; }
+  .trade-entry-bar { margin-left: 10px; margin-right: 10px; }
+  .futures-desk { padding-left: 10px; padding-right: 10px; }
+  .futures-action-grid { grid-template-columns: 1fr 1fr; }
+  .futures-panel-head { align-items: stretch; }
+  .futures-currency-tabs { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .futures-row, .futures-equity-row, .futures-equity-head { grid-template-columns: 1fr; text-align: left; }
+  .futures-row span:nth-child(2), .futures-row span:nth-child(3), .futures-equity-row strong, .futures-equity-head span:last-child { text-align: left; }
+  .futures-footer button { width: 100%; }
   .lightning-top { grid-template-columns: 42px 1fr auto; padding-left: 10px; padding-right: 10px; }
   .lightning-title { font-size: 19px; }
+  .account-inline-select { min-width: 0; width: 100%; }
+  .lightning-account-row { grid-template-columns: 48px minmax(0, 1fr); padding-left: 10px; padding-right: 10px; }
   .lightning-search-row { grid-template-columns: 1fr; padding-left: 10px; padding-right: 10px; }
   .lightning-quote { grid-template-columns: 1fr 1fr; }
   .lightning-ladder { grid-template-columns: .7fr 1fr 1.45fr 1fr .7fr; grid-auto-rows: 54px; min-height: 0; }
