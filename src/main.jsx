@@ -29,11 +29,12 @@ const positions = [
 ];
 
 const traderGroups = [
-  { name: '小王', avatar: '王', avatarClass: 'blue', accounts: '永豐A + 富邦B', unrealized: '+$541,000', realized: '+$40,500', total: '+$581,500', rows: positions },
+  { name: '小王', avatar: '王', avatarClass: 'blue', category: 'proprietary', accounts: '永豐A + 富邦B', unrealized: '+$541,000', realized: '+$40,500', total: '+$581,500', rows: positions },
   {
     name: '小李',
     avatar: '李',
     avatarClass: 'green',
+    category: 'proprietary',
     accounts: '永豐A + 群益C',
     unrealized: '+$614,000',
     realized: '-$6,500',
@@ -48,6 +49,7 @@ const traderGroups = [
     name: '小陳',
     avatar: '陳',
     avatarClass: 'purple',
+    category: 'external',
     accounts: '富邦B',
     unrealized: '+$182,500',
     realized: '+$18,000',
@@ -57,7 +59,39 @@ const traderGroups = [
       { sym: '2317', name: '鴻海', account: '富邦B', accountClass: 'green', qty: 25, cost: '170.80', price: '168.50', costTotal: '4,270,000', value: '4,212,500', pnl: '-$57,500', pnlRate: '-1.35%', up: false, trend: '虧損中' },
     ],
   },
+  {
+    name: '小林',
+    avatar: '林',
+    avatarClass: 'blue',
+    category: 'external',
+    accounts: '群益C + 富邦B',
+    unrealized: '+$96,000',
+    realized: '+$12,800',
+    total: '+$108,800',
+    rows: [
+      { sym: '0050', name: '台灣50', account: '群益C', accountClass: 'purple', qty: 18, cost: '181.00', price: '186.20', costTotal: '3,258,000', value: '3,351,600', pnl: '+$93,600', pnlRate: '+2.87%', up: true, trend: '成本97%' },
+      { sym: '2881', name: '富邦金', account: '富邦B', accountClass: 'green', qty: 30, cost: '82.20', price: '82.30', costTotal: '2,466,000', value: '2,469,000', pnl: '+$3,000', pnlRate: '+0.12%', up: true, trend: '成本99%' },
+    ],
+  },
 ];
+
+const traderCategoryMeta = {
+  proprietary: { label: '自有操盤', desc: '公司自有資金與正式授權帳號', color: 'blue' },
+  external: { label: '丙種操盤', desc: '丙種授權、分級監控與獨立風控', color: 'purple' },
+};
+
+const traderCategories = ['proprietary', 'external'].map((id) => ({
+  id,
+  ...traderCategoryMeta[id],
+  traders: traderGroups.filter((trader) => trader.category === id),
+}));
+
+const adminMatrix = {
+  小王: { cells: ['+$32,500', '+$8,000', '—', '+$40,500', '+$541,000', '+$581,500', '正常'] },
+  小李: { cells: ['-$12,000', '—', '+$5,500', '-$6,500', '+$614,000', '+$607,500', '注意'], warn: true },
+  小陳: { cells: ['—', '+$18,000', '—', '+$18,000', '+$182,500', '+$200,500', '正常'] },
+  小林: { cells: ['—', '+$7,800', '+$5,000', '+$12,800', '+$96,000', '+$108,800', '正常'] },
+};
 
 function Badge({ color = 'gray', children }) {
   return <span className={`badge badge-${color}`}>{children}</span>;
@@ -79,6 +113,7 @@ const marginAlerts = [
   { trader: '小王', symbol: '2317', name: '鴻海', ratio: 134, line: 130, gap: 4, level: 'danger', status: '接近追繳線' },
   { trader: '小李', symbol: '2881', name: '富邦金', ratio: 141, line: 130, gap: 11, level: 'warn', status: '偏低觀察' },
   { trader: '小陳', symbol: '2454', name: '聯發科', ratio: 168, line: 130, gap: 38, level: 'ok', status: '正常' },
+  { trader: '小林', symbol: '0050', name: '台灣50', ratio: 152, line: 130, gap: 22, level: 'ok', status: '正常' },
 ];
 
 const marginGroups = [
@@ -106,6 +141,14 @@ const marginGroups = [
     ],
     totals: { finance: '$2,210,000', equity: '$1,510,000', minRatio: '168%', value: '$3,720,000', pnl: '+$90,000' },
     settlement: { cashT2: '$4,212,500', marginSelfPay: '$1,510,000', interest: '$1,670' },
+  },
+  {
+    trader: '小林',
+    rows: [
+      { sym: '0050', name: '台灣50', account: '群益C', qty: 12, cost: '181.00', price: '186.20', marketValue: '$2,234,400', financeAmount: '$1,470,000', equity: '$764,400', interest: '$1,120', marginRatio: 152, gap: 22, pnl: '+$62,400', pnlRate: '+2.87%' },
+    ],
+    totals: { finance: '$1,470,000', equity: '$764,400', minRatio: '152%', value: '$2,234,400', pnl: '+$62,400' },
+    settlement: { cashT2: '$2,469,000', marginSelfPay: '$764,400', interest: '$1,120' },
   },
 ];
 
@@ -1009,10 +1052,20 @@ function Ticker() {
 }
 
 function PositionsTab() {
-  const [selectedTraderName, setSelectedTraderName] = useState(traderGroups[0].name);
+  const [selectedCategoryId, setSelectedCategoryId] = useState(traderGroups[0].category);
+  const categoryTraders = traderGroups.filter((trader) => trader.category === selectedCategoryId);
+  const [selectedTraderName, setSelectedTraderName] = useState(categoryTraders[0].name);
+  const visibleTraders = categoryTraders.length ? categoryTraders : traderGroups;
   const selectedTrader = traderGroups.find((trader) => trader.name === selectedTraderName) || traderGroups[0];
+  const selectedCategory = traderCategoryMeta[selectedTrader.category];
   const selectedMarginGroup = marginGroups.find((group) => group.trader === selectedTrader.name);
   const selectedAlert = marginAlerts.find((alert) => alert.trader === selectedTrader.name);
+
+  function changeCategory(categoryId) {
+    const nextTraders = traderGroups.filter((trader) => trader.category === categoryId);
+    setSelectedCategoryId(categoryId);
+    setSelectedTraderName(nextTraders[0]?.name || traderGroups[0].name);
+  }
 
   return (
     <div className="positions-layout">
@@ -1024,30 +1077,42 @@ function PositionsTab() {
       </div>
       <div className="positions-workspace">
         <aside className="trader-switcher">
-          <div className="trader-switcher-title">操盤手</div>
-          {traderGroups.map((trader) => {
-            const alert = marginAlerts.find((item) => item.trader === trader.name);
-            return (
-              <button
-                className={`trader-switch-card ${selectedTrader.name === trader.name ? 'active' : ''}`}
-                key={trader.name}
-                onClick={() => setSelectedTraderName(trader.name)}
-              >
-                <TraderChip {...trader} />
-                <div className="trader-switch-stats">
-                  <span>總損益 <strong className="pnl-pos">{trader.total}</strong></span>
-                  <span>融資維持率 <strong className={alert?.level === 'danger' ? 'pnl-neg' : alert?.level === 'warn' ? 'val-amber' : 'pnl-pos'}>{alert?.ratio || '-'}%</strong></span>
-                </div>
-                <Badge color={alert?.level === 'danger' ? 'red' : alert?.level === 'warn' ? 'amber' : 'green'}>{alert?.status || '正常'}</Badge>
-              </button>
-            );
-          })}
+          <div className="trader-switcher-title">篩選操盤手</div>
+          <label className="filter-field">
+            <span>操盤類別</span>
+            <select value={selectedCategoryId} onChange={(event) => changeCategory(event.target.value)}>
+              {traderCategories.map((category) => (
+                <option value={category.id} key={category.id}>{category.label}</option>
+              ))}
+            </select>
+          </label>
+          <label className="filter-field">
+            <span>操盤手</span>
+            <select value={selectedTraderName} onChange={(event) => setSelectedTraderName(event.target.value)}>
+              {visibleTraders.map((trader) => (
+                <option value={trader.name} key={trader.name}>{trader.name} · {trader.accounts}</option>
+              ))}
+            </select>
+          </label>
+          <div className="selected-trader-card">
+            <div className="trader-category-head">
+              <span>{selectedCategory.label}</span>
+              <Badge color={selectedCategory.color}>{visibleTraders.length} 人</Badge>
+            </div>
+            <div className="trader-category-desc">{selectedCategory.desc}</div>
+            <TraderChip {...selectedTrader} />
+            <div className="trader-switch-stats">
+              <span>總損益 <strong className="pnl-pos">{selectedTrader.total}</strong></span>
+              <span>融資維持率 <strong className={selectedAlert?.level === 'danger' ? 'pnl-neg' : selectedAlert?.level === 'warn' ? 'val-amber' : 'pnl-pos'}>{selectedAlert?.ratio || '-'}%</strong></span>
+            </div>
+            <Badge color={selectedAlert?.level === 'danger' ? 'red' : selectedAlert?.level === 'warn' ? 'amber' : 'green'}>{selectedAlert?.status || '正常'}</Badge>
+          </div>
         </aside>
         <main className="trader-detail-panel">
           <div className="selected-trader-summary">
             <div>
               <span className="stat-label">目前檢視</span>
-              <h2>{selectedTrader.name}</h2>
+              <h2>{selectedTrader.name} <Badge color={selectedCategory.color}>{selectedCategory.label}</Badge></h2>
               <p>{selectedTrader.accounts}</p>
             </div>
             <div className="stat-group">
@@ -1095,6 +1160,26 @@ function TraderChip({ name, avatar, avatarClass, accounts }) {
 }
 
 function AdminTab() {
+  const [categoryFilter, setCategoryFilter] = useState('all');
+  const adminTraderOptions = categoryFilter === 'all'
+    ? traderGroups
+    : traderGroups.filter((trader) => trader.category === categoryFilter);
+  const [traderFilter, setTraderFilter] = useState('all');
+  const visibleCategories = traderCategories
+    .map((category) => ({
+      ...category,
+      traders: category.traders.filter((trader) => (
+        (categoryFilter === 'all' || trader.category === categoryFilter)
+        && (traderFilter === 'all' || trader.name === traderFilter)
+      )),
+    }))
+    .filter((category) => category.traders.length);
+
+  function changeAdminCategory(categoryId) {
+    setCategoryFilter(categoryId);
+    setTraderFilter('all');
+  }
+
   return (
     <div className="admin-layout">
       <div className="admin-head">
@@ -1104,14 +1189,56 @@ function AdminTab() {
           <IconButton variant="primary" title="匯出報表"><Download size={16} /></IconButton>
         </div>
       </div>
+      <div className="admin-filter-bar">
+        <label className="filter-field">
+          <span>操盤類別</span>
+          <select value={categoryFilter} onChange={(event) => changeAdminCategory(event.target.value)}>
+            <option value="all">全部類別</option>
+            {traderCategories.map((category) => (
+              <option value={category.id} key={category.id}>{category.label}</option>
+            ))}
+          </select>
+        </label>
+        <label className="filter-field">
+          <span>操盤手</span>
+          <select value={traderFilter} onChange={(event) => setTraderFilter(event.target.value)}>
+            <option value="all">全部操盤手</option>
+            {adminTraderOptions.map((trader) => (
+              <option value={trader.name} key={trader.name}>{trader.name} · {traderCategoryMeta[trader.category].label}</option>
+            ))}
+          </select>
+        </label>
+      </div>
+      <div className="category-summary-grid">
+        {visibleCategories.map((category) => (
+          <div className="category-summary-card" key={category.id}>
+            <div>
+              <span className="stat-label">操盤類別</span>
+              <strong>{category.label}</strong>
+            </div>
+            <Badge color={category.color}>{category.traders.map((trader) => trader.name).join(' · ')}</Badge>
+          </div>
+        ))}
+      </div>
       <div className="scroll-x">
         <table className="matrix-table">
-          <thead><tr><th>操盤手</th><th>永豐A</th><th>富邦B</th><th>群益C</th><th>已實現合計</th><th>未實現</th><th>總損益</th><th>風控</th></tr></thead>
+          <thead><tr><th>類別 / 操盤手</th><th>永豐A</th><th>富邦B</th><th>群益C</th><th>已實現合計</th><th>未實現</th><th>總損益</th><th>風控</th></tr></thead>
           <tbody>
-            <MatrixRow trader={traderGroups[0]} cells={['+$32,500', '+$8,000', '—', '+$40,500', '+$541,000', '+$581,500', '正常']} />
-            <MatrixRow trader={traderGroups[1]} cells={['-$12,000', '—', '+$5,500', '-$6,500', '+$614,000', '+$607,500', '注意']} warn />
-            <MatrixRow trader={traderGroups[2]} cells={['—', '+$18,000', '—', '+$18,000', '+$182,500', '+$200,500', '正常']} />
-            <tr className="total-row"><td>合計</td><td className="pnl-pos">+$20,500</td><td className="pnl-pos">+$26,000</td><td className="pnl-pos">+$5,500</td><td className="pnl-pos">+$52,000</td><td className="pnl-pos">+$1,337,500</td><td className="pnl-pos">+$1,389,500</td><td /></tr>
+            {visibleCategories.map((category) => (
+              <React.Fragment key={category.id}>
+                <tr className="matrix-category-row">
+                  <td colSpan="8">
+                    <span>{category.label}</span>
+                    <small>{category.desc}</small>
+                  </td>
+                </tr>
+                {category.traders.map((trader) => {
+                  const row = adminMatrix[trader.name];
+                  return <MatrixRow trader={trader} cells={row.cells} warn={row.warn} key={trader.name} />;
+                })}
+              </React.Fragment>
+            ))}
+            <tr className="total-row"><td>全場合計</td><td className="pnl-pos">+$20,500</td><td className="pnl-pos">+$33,800</td><td className="pnl-pos">+$10,500</td><td className="pnl-pos">+$64,800</td><td className="pnl-pos">+$1,433,500</td><td className="pnl-pos">+$1,498,300</td><td /></tr>
           </tbody>
         </table>
       </div>
@@ -1141,27 +1268,90 @@ function AccountMini({ name, status, percent, amount, note, color, warn }) {
 }
 
 function AccountsTab() {
+  const [categoryFilter, setCategoryFilter] = useState('all');
   const accounts = [
-    ['永豐證券 A', '啟用', '012-345678 · 台股現貨 · 新台幣 · Adapter: SinoPacAdapter', '操盤手綁定：小王(主1) · 小李(備援1)', '$20,000,000', '$12,000,000', '+$20,500', false],
-    ['富邦證券 B', '啟用', '988-221144 · 台股現貨 · 新台幣 · Adapter: FubonAdapter', '操盤手綁定：小王(備援1) · 小陳(主1)', '$15,000,000', '$5,250,000', '+$26,000', false],
-    ['群益證券 C', '重連中', 'KGI-779900 · 台股現貨/期貨 · 新台幣 · Adapter: KGIAdapter', '連線錯誤：TCP timeout (09:28:44) · 重連嘗試 3/5', '$10,000,000', '$2,000,000', '+$5,500', true],
+    {
+      name: '永豐證券 A',
+      status: '啟用',
+      meta: '012-345678 · 台股現貨 · 新台幣 · Adapter: SinoPacAdapter',
+      bindings: [
+        { category: 'proprietary', text: '自有操盤：小王(主1) · 小李(備援1)' },
+      ],
+      quota: '$20,000,000',
+      used: '$12,000,000',
+      pnl: '+$20,500',
+      warn: false,
+    },
+    {
+      name: '富邦證券 B',
+      status: '啟用',
+      meta: '988-221144 · 台股現貨 · 新台幣 · Adapter: FubonAdapter',
+      bindings: [
+        { category: 'proprietary', text: '自有操盤：小王(備援1)' },
+        { category: 'external', text: '丙種操盤：小陳(主1) · 小林(備援1)' },
+      ],
+      quota: '$15,000,000',
+      used: '$5,250,000',
+      pnl: '+$33,800',
+      warn: false,
+    },
+    {
+      name: '群益證券 C',
+      status: '重連中',
+      meta: 'KGI-779900 · 台股現貨/期貨 · 新台幣 · Adapter: KGIAdapter',
+      bindings: [
+        { category: 'proprietary', text: '自有操盤：小李(備援2)' },
+        { category: 'external', text: '丙種操盤：小林(主1)' },
+      ],
+      quota: '$10,000,000',
+      used: '$2,000,000',
+      pnl: '+$10,500',
+      warn: true,
+      note: '連線錯誤：TCP timeout (09:28:44) · 重連嘗試 3/5',
+    },
   ];
+  const visibleAccounts = accounts.filter((account) => (
+    categoryFilter === 'all' || account.bindings.some((binding) => binding.category === categoryFilter)
+  ));
   return (
     <div className="accounts-layout">
       <SectionHeader title="券商帳號管理" action={<button className="add-btn"><Plus size={14} />新增帳號</button>} />
-      {accounts.map((a) => <AccountCard key={a[0]} data={a} />)}
+      <div className="account-category-filter">
+        <button className={categoryFilter === 'all' ? 'active' : ''} onClick={() => setCategoryFilter('all')}>全部帳號</button>
+        {traderCategories.map((category) => (
+          <button
+            className={categoryFilter === category.id ? 'active' : ''}
+            key={category.id}
+            onClick={() => setCategoryFilter(category.id)}
+          >
+            {category.label}
+          </button>
+        ))}
+      </div>
+      {visibleAccounts.map((account) => <AccountCard key={account.name} data={account} activeCategory={categoryFilter} />)}
     </div>
   );
 }
 
-function AccountCard({ data }) {
-  const [name, status, meta, note, quota, used, pnl, warn] = data;
+function AccountCard({ data, activeCategory }) {
+  const { name, status, meta, bindings, note, quota, used, pnl, warn } = data;
+  const shownBindings = activeCategory === 'all'
+    ? bindings
+    : bindings.filter((binding) => binding.category === activeCategory);
   return (
     <div className={`account-card ${warn ? 'warn' : ''}`}>
       <div className="account-card-info">
         <div className="account-card-name">{name} <Badge color={warn ? 'amber' : 'green'}>{status}</Badge></div>
         <div className="account-card-meta">{meta}</div>
-        <div className={`account-card-meta ${warn ? 'val-amber' : ''}`}>{note}</div>
+        <div className="account-binding-list">
+          {shownBindings.map((binding) => (
+            <div className="account-binding-line" key={binding.text}>
+              <Badge color={traderCategoryMeta[binding.category].color}>{traderCategoryMeta[binding.category].label}</Badge>
+              <span>{binding.text.replace(`${traderCategoryMeta[binding.category].label}：`, '')}</span>
+            </div>
+          ))}
+        </div>
+        {note && <div className={`account-card-meta ${warn ? 'val-amber' : ''}`}>{note}</div>}
       </div>
       <div className="account-card-stats">
         <Stat label="每日額度" value={quota} tone="val-blue" />
