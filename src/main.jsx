@@ -530,7 +530,7 @@ function SettlementDay({ day, label, amount, tone, details = [] }) {
   );
 }
 
-function TraderPositionBlock({ trader }) {
+function TraderPositionBlock({ trader, compactHeader = false }) {
   const marginGroup = marginGroups.find((group) => group.trader === trader.name) || {
     rows: [],
     totals: { value: '$0', finance: '$0', equity: '$0', minRatio: '-', pnl: '$0' },
@@ -539,14 +539,16 @@ function TraderPositionBlock({ trader }) {
 
   return (
     <section className="trader-section">
-      <div className="trader-header">
-        <TraderChip {...trader} />
-        <div className="stat-group">
-          <Stat label="未實現" value={trader.unrealized} tone="pnl-pos" />
-          <Stat label="已實現" value={trader.realized} tone={trader.realized.startsWith('-') ? 'pnl-neg' : 'pnl-pos'} />
-          <Stat label="總損益" value={trader.total} tone="pnl-pos" />
+      {!compactHeader && (
+        <div className="trader-header">
+          <TraderChip {...trader} />
+          <div className="stat-group">
+            <Stat label="未實現" value={trader.unrealized} tone="pnl-pos" />
+            <Stat label="已實現" value={trader.realized} tone={trader.realized.startsWith('-') ? 'pnl-neg' : 'pnl-pos'} />
+            <Stat label="總損益" value={trader.total} tone="pnl-pos" />
+          </div>
         </div>
-      </div>
+      )}
       <PositionSubsection title={`${trader.name} — 現股部位`} meta="T+2 交割以成交全額計算">
         <PositionTable rows={trader.rows} />
         <AccountSummaryStrip rows={trader.rows} />
@@ -1007,6 +1009,11 @@ function Ticker() {
 }
 
 function PositionsTab() {
+  const [selectedTraderName, setSelectedTraderName] = useState(traderGroups[0].name);
+  const selectedTrader = traderGroups.find((trader) => trader.name === selectedTraderName) || traderGroups[0];
+  const selectedMarginGroup = marginGroups.find((group) => group.trader === selectedTrader.name);
+  const selectedAlert = marginAlerts.find((alert) => alert.trader === selectedTrader.name);
+
   return (
     <div className="positions-layout">
       <div className="summary-grid">
@@ -1015,7 +1022,44 @@ function PositionsTab() {
         <SummaryCard label="追繳線最近距離" value="4%" detail="小王 · 2317 鴻海" tone="pnl-neg" />
         <SummaryCard label="今日已實現合計" value="+$38,400" detail="三位操盤手合計" tone="pnl-pos" />
       </div>
-      {traderGroups.map((trader) => <TraderPositionBlock trader={trader} key={trader.name} />)}
+      <div className="positions-workspace">
+        <aside className="trader-switcher">
+          <div className="trader-switcher-title">操盤手</div>
+          {traderGroups.map((trader) => {
+            const alert = marginAlerts.find((item) => item.trader === trader.name);
+            return (
+              <button
+                className={`trader-switch-card ${selectedTrader.name === trader.name ? 'active' : ''}`}
+                key={trader.name}
+                onClick={() => setSelectedTraderName(trader.name)}
+              >
+                <TraderChip {...trader} />
+                <div className="trader-switch-stats">
+                  <span>總損益 <strong className="pnl-pos">{trader.total}</strong></span>
+                  <span>融資維持率 <strong className={alert?.level === 'danger' ? 'pnl-neg' : alert?.level === 'warn' ? 'val-amber' : 'pnl-pos'}>{alert?.ratio || '-'}%</strong></span>
+                </div>
+                <Badge color={alert?.level === 'danger' ? 'red' : alert?.level === 'warn' ? 'amber' : 'green'}>{alert?.status || '正常'}</Badge>
+              </button>
+            );
+          })}
+        </aside>
+        <main className="trader-detail-panel">
+          <div className="selected-trader-summary">
+            <div>
+              <span className="stat-label">目前檢視</span>
+              <h2>{selectedTrader.name}</h2>
+              <p>{selectedTrader.accounts}</p>
+            </div>
+            <div className="stat-group">
+              <Stat label="未實現" value={selectedTrader.unrealized} tone="pnl-pos" />
+              <Stat label="已實現" value={selectedTrader.realized} tone={selectedTrader.realized.startsWith('-') ? 'pnl-neg' : 'pnl-pos'} />
+              <Stat label="總損益" value={selectedTrader.total} tone="pnl-pos" />
+              <Stat label="最低維持率" value={`${selectedAlert?.ratio || selectedMarginGroup?.totals.minRatio || '-'}%`} tone={selectedAlert?.level === 'danger' ? 'pnl-neg' : selectedAlert?.level === 'warn' ? 'val-amber' : 'pnl-pos'} />
+            </div>
+          </div>
+          <TraderPositionBlock trader={selectedTrader} compactHeader />
+        </main>
+      </div>
       <div className="grand-total-bar">
         <strong>全場持倉與融資合計</strong>
         <div className="stat-group">
